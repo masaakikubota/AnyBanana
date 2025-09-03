@@ -6,31 +6,40 @@
   <title>NanoBanana Prompt Builder & Generator</title>
   <style>
     :root{
-      --bg:#ffffff; --panel:#f7f9fc; --muted:#5b6475; --text:#0b1220; --accent:#0b6bff; --danger:#c81e1e;
-      --card:#ffffff; --border:#e5e8ef; --ok:#16a34a;
+      /* AnyAI UI tokens */
+      --bg:#FFFFFF; --bg-subtle:#F9FAFB; --border:#E5E7EB; --text:#0F172A; --muted:#6B7280;
+      --primary:#2B6AF3; --primary-600:#1F5AE6; --cyan:#16B6FF; --orange:#FF7A3D; --amber:#FFC24A;
+      --success:#16A34A; --warning:#F59E0B; --error:#DC2626;
+      --radius-sm:8px; --radius-md:12px; --radius-lg:16px;
+      --shadow-card:0 1px 2px rgba(0,0,0,.06), 0 1px 1px rgba(0,0,0,.04);
+      --shadow-popover:0 8px 24px rgba(0,0,0,.12);
+      /* legacy aliases */
+      --panel: var(--bg); --card: var(--bg); --accent: var(--primary); --ok: var(--success);
     }
     html,body{height:100%}
-    body{margin:0;background:#ffffff;color:var(--text);font:16px/1.55 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+    body{margin:0;background:var(--bg-subtle);color:var(--text);font:16px/1.55 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
     a{color:var(--accent)}
     .container{max-width:1200px;margin:0 auto;padding:28px}
     header{display:flex;gap:12px;align-items:center;margin-bottom:18px;flex-wrap:wrap}
     header h1{font-size:20px;margin:0}
     header .tag{font-size:12px;border:1px solid var(--border);background:var(--panel);padding:2px 8px;border-radius:999px;color:var(--muted)}
-    .panel{background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px}
+    .panel{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px; box-shadow: var(--shadow-card)}
     .grid{display:grid;gap:16px}
-    .cols-2{grid-template-columns:6fr 4fr; column-gap:28px}
+    .cols-2{grid-template-columns:6fr 4fr; column-gap:36px; row-gap:12px}
     .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
     label{font-size:14px;color:var(--muted)}
-    input[type="text"], textarea, input[type="number"]{width:100%;background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:10px 12px;outline:none}
+    input[type="text"], textarea, input[type="number"]{width:100%;background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:var(--radius-md);padding:10px 12px;outline:none}
+    input[type="text"]:focus, textarea:focus, input[type="number"]:focus{ box-shadow: 0 0 0 3px rgba(43,106,243,0.15); border-color: var(--primary); }
     textarea{min-height:96px;resize:vertical}
-    .btn{appearance:none;border:1px solid var(--border);background:var(--panel);color:var(--text);padding:10px 14px;border-radius:10px;cursor:pointer}
+    .btn{appearance:none;border:1px solid var(--border);background:var(--panel);color:var(--text);padding:10px 14px;border-radius:var(--radius-md);cursor:pointer}
     .btn:hover{filter:brightness(1.05)}
-    .btn.primary{background:linear-gradient(90deg,#3aa0ff,#6ae9ff);border:none;color:#072033}
+    .btn.primary{background:var(--primary);border:none;color:#fff}
+    .btn.primary:hover{ background: var(--primary-600) }
     .btn.danger{background:linear-gradient(90deg,#ff6b6b,#ffa06d);border:none;color:#2a110e}
     .btn.ghost{background:transparent;border:1px dashed var(--border);color:var(--muted)}
     .hint{font-size:12px;color:var(--muted)}
-    .upload-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
-    .slot{position:relative;border:1px dashed var(--border);background:var(--card);aspect-ratio:1;border-radius:12px;display:flex;align-items:center;justify-content:center;color:var(--muted);overflow:hidden}
+    .upload-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+    .slot{position:relative;border:1px dashed var(--border);background:var(--card);aspect-ratio:1;border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;color:var(--muted);overflow:hidden}
     .slot input{display:none}
     .slot .idx{position:absolute;top:6px;left:8px;font-size:12px;background:#0000000d;padding:2px 6px;border-radius:999px}
     .slot img{width:100%;height:100%;object-fit:cover}
@@ -40,10 +49,10 @@
     .slot.dragover{border-color:var(--accent);box-shadow:0 0 0 2px rgba(11,107,255,.2) inset}
     .toggle{margin:8px 0 0}
     .questions{display:grid;gap:10px}
-    .qcard{border:1px solid var(--border);background:var(--panel);padding:12px;border-radius:10px}
+    .qcard{border:1px solid var(--border);background:var(--panel);padding:12px;border-radius:var(--radius-md); box-shadow: var(--shadow-card)}
     .qcard h4{margin:0 0 8px 0;font-size:14px}
     .out{white-space:pre-wrap;background:var(--card);border:1px solid var(--border);padding:12px;border-radius:10px;max-height:260px;overflow:auto}
-    .gallery{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+    .gallery{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
     .gallery img{width:100%;border-radius:10px;border:1px solid var(--border)}
     .pill{display:inline-flex;align-items:center;gap:6px;background:#0000;border:1px solid var(--border);padding:6px 10px;border-radius:999px;font-size:12px;color:var(--muted)}
     .footer{margin-top:28px;color:var(--muted);font-size:12px}
@@ -52,8 +61,11 @@
     .sr{position:absolute;clip:rect(1px,1px,1px,1px);padding:0;border:0;height:1px;width:1px;overflow:hidden}
     @media (max-width: 900px){
       .cols-2{grid-template-columns:1fr}
-      .cols-2 > div + div{ margin-top:14px }
+      .cols-2 > div + div{ margin-top:14px; border-left:none; padding-left:0 }
       .gallery,.upload-grid{grid-template-columns:repeat(3,1fr)}
+    }
+    @media (min-width: 901px){
+      .cols-2 > div:last-child{ border-left:1px dashed var(--border); padding-left:16px }
     }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
