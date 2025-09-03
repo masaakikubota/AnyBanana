@@ -406,7 +406,9 @@ JSON like:
       const removeBtn = el.querySelector('.remove');
       const dropLabel = el.querySelector('.drop');
 
-      el.addEventListener('click', (e)=>{ if(e.target===removeBtn) return; selectSlot(el); if(e.target!==input) input.click(); });
+      // Single-click: select slot for paste target. Double-click: open file picker.
+      el.addEventListener('click', (e)=>{ if(e.target===removeBtn) return; selectSlot(el); });
+      el.addEventListener('dblclick', (e)=>{ if(e.target===removeBtn) return; if(e.target!==input) input.click(); });
       input.addEventListener('change', ()=> loadFile());
 
       ['dragenter','dragover'].forEach(ev=> el.addEventListener(ev,e=>{ e.preventDefault(); el.classList.add('dragover'); }));
