@@ -206,6 +206,9 @@
         return localStorage.getItem('NB_API_BASE_URL') || '';
       }catch(e){ return ''; }
     })();
+    // 直接API呼び出し用の埋め込みキー（必要ならここに設定）
+    const DIRECT_API_KEY = '';
+    const GOOGLE_API_BASE = 'https://generativelanguage.googleapis.com/v1beta';
 
     // ヘッダーにAPI状態を表示
     (function(){
@@ -228,6 +231,9 @@
           })
           .catch(()=>{ el.textContent = 'API: ' + hostText + ' (NG)'; el.classList.remove('ok'); el.classList.add('warn'); })
           .finally(()=> clearTimeout(t));
+      } else if (DIRECT_API_KEY){
+        el.textContent = 'API: embedded';
+        el.classList.add('ok'); el.classList.remove('warn');
       } else {
         el.textContent = 'API: mock mode'; el.classList.remove('ok'); el.classList.add('warn');
       }
@@ -493,7 +499,7 @@ JSON like:
       document.getElementById('goal').value='';
       document.getElementById('count').value='10';
       document.getElementById('ar').value='';
-      document.getElementById('systemPrompt').value='';
+      const _sp = document.getElementById('systemPrompt'); if(_sp) _sp.value='';
       document.getElementById('safety').value='none';
       slots.forEach(s=> s.querySelector('.remove').click());
       document.getElementById('questions').innerHTML='';
@@ -513,6 +519,8 @@ JSON like:
           method:'POST', headers:{'Content-Type':'application/json'},
           body: JSON.stringify({ systemPrompt: SYSTEM_PROMPT_FOR_STEP2, metaPrompt: META_PROMPT_FOR_STEP2, input: payload })
         }).then(r=>r.json()).catch(()=>null);
+      } else if (DIRECT_API_KEY){
+        resp = await directPrompt(SYSTEM_PROMPT_FOR_STEP2, META_PROMPT_FOR_STEP2, payload, null).catch(()=>null);
       }
       if(!resp || resp.phase !== 'questions'){ resp = buildLocalQuestions(payload); }
       renderQuestions(resp.questions);
@@ -593,6 +601,8 @@ JSON like:
           method:'POST', headers:{'Content-Type':'application/json'},
           body: JSON.stringify({ systemPrompt: SYSTEM_PROMPT_FOR_STEP2, metaPrompt: META_PROMPT_FOR_STEP2, input: payload, answers })
         }).then(r=>r.json()).catch(()=>null);
+      } else if (DIRECT_API_KEY){
+        resp = await directPrompt(SYSTEM_PROMPT_FOR_STEP2, META_PROMPT_FOR_STEP2, payload, answers).catch(()=>null);
       }
       if(!resp || resp.phase !== 'final'){
         resp = { phase:'final', final_prompt: buildLocalPrompt(payload, answers), notes: 'If multiple input images, the last image AR is adopted when unspecified.' };
@@ -664,6 +674,11 @@ JSON like:
         if(!res || !Array.isArray(res.images)){ updateProgress('生成に失敗しました（プロキシ確認）'); return; }
         res.images.forEach((b64,i)=> addToGallery(`data:image/png;base64,${b64}`, i+1));
         updateProgress(`完了：${res.images.length}枚`);
+      } else if (DIRECT_API_KEY){
+        const res = await directGenerate({ prompt, images: payload.images, n: total, aspect_ratio: payload.aspect_ratio || undefined, safety: payload.safety || 'none', output_mime_type: 'image/png' }).catch(()=>null);
+        if(!res || !Array.isArray(res.images)){ updateProgress('生成に失敗しました（直接API）'); return; }
+        res.images.forEach((b64,i)=> addToGallery(`data:image/png;base64,${b64}`, i+1));
+        updateProgress(`完了：${res.images.length}枚`);
       } else {
         // モック描画（API未設定）
         for(let i=1;i<=total;i++){
@@ -702,6 +717,53 @@ JSON like:
         else line = testLine;
       }
       ctx.fillText(line, x, y);
+    }
+
+    async function directPrompt(systemPrompt, metaPrompt, input, answers){
+      const userBlock = `INPUT:\n${JSON.stringify(input)}\n\n` + (answers ? `ANSWERS:\n${JSON.stringify(answers)}` : '');
+      const body = {
+        system_instruction: systemPrompt ? { parts: [{ text: systemPrompt }] } : undefined,
+        contents: [{ role: 'user', parts: [{ text: `${metaPrompt}\n\n${userBlock}` }] }],
+        generationConfig: { response_mime_type: 'application/json' }
+      };
+      const r = await fetch(`${GOOGLE_API_BASE}/models/gemini-2.5-pro:generateContent?key=${DIRECT_API_KEY}`, {
+        method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)
+      });
+      const json = await r.json();
+      const text = json?.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
+      try { return JSON.parse(text); } catch { return { phase:'final', final_prompt: 'Fallback: could not parse model JSON.', notes:'Please retry.' }; }
+    }
+
+    async function directGenerate({ prompt, images = [], n = 1, aspect_ratio, safety = 'none', output_mime_type = 'image/png' }){
+      const harmCats = [
+        'HARM_CATEGORY_HATE_SPEECH', 'HARM_CATEGORY_SEXUALLY_EXPLICIT', 'HARM_CATEGORY_DANGEROUS_CONTENT', 'HARM_CATEGORY_HARASSMENT', 'HARM_CATEGORY_CIVIC_INTEGRITY'
+      ];
+      const safetySettings = safety === 'none' ? harmCats.map(c => ({ category: c, threshold: 'BLOCK_NONE' })) : undefined;
+      const toParts = () => {
+        const parts = [{ text: prompt }];
+        for (const im of images) {
+          const b64 = (im.dataUrl || '').split(',')[1] || '';
+          parts.push({ inline_data: { mime_type: im.mimeType || 'image/png', data: b64 } });
+        }
+        return parts;
+      };
+      const bodyBase = {
+        contents: [{ parts: toParts() }],
+        ...(safetySettings ? { safetySettings } : {}),
+        ...(output_mime_type ? { generationConfig: { response_mime_type: output_mime_type } } : {})
+      };
+      const outImages = [];
+      n = Math.min(Math.max(1, Number(n)||1), 50);
+      for(let i=0;i<n;i++){
+        const r = await fetch(`${GOOGLE_API_BASE}/models/gemini-2.5-flash-image-preview:generateContent?key=${DIRECT_API_KEY}`, {
+          method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(bodyBase)
+        });
+        const json = await r.json();
+        const parts = json?.candidates?.[0]?.content?.parts || [];
+        const img = parts.find(p => p.inline_data?.data);
+        if(img) outImages.push(img.inline_data.data);
+      }
+      return { images: outImages };
     }
 
     // ====== ZIP一括DL ======
