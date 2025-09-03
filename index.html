@@ -75,10 +75,7 @@
     .progress{ position:relative; height:6px; background:#e5e7eb; border-radius:9999px; overflow:hidden }
     .progress .ind{ position:absolute; left:-40%; top:0; bottom:0; width:40%; background:var(--primary); animation: indmove 1.2s infinite ease }
     @keyframes indmove { 0%{ left:-40% } 50%{ left:60% } 100%{ left:100% } }
-    /* Gallery responsive columns: 5/4/3/2 */
-    @media (max-width: 1199px){ .gallery{ grid-template-columns:repeat(4,1fr) } }
-    @media (max-width: 1023px){ .gallery{ grid-template-columns:repeat(3,1fr) } }
-    @media (max-width: 767px){ .gallery{ grid-template-columns:repeat(2,1fr) } }
+    /* Gallery fixed to 5 columns */
     /* Segmented control for AR presets */
     .seg{ display:inline-flex; gap:0; border:1px solid var(--border); border-radius:9999px; overflow:hidden; background:var(--panel); margin-top:6px }
     .seg-btn{ border:none; background:transparent; padding:6px 10px; font-size:12px; color:var(--muted); cursor:pointer }
