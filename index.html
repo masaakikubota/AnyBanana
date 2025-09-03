@@ -179,9 +179,6 @@
 
       <div id="questions" class="questions" style="margin-top:12px"></div>
 
-      <h3>生成された最終プロンプト（NanoBanana 用 / English）</h3>
-      <div id="finalPrompt" class="out" aria-live="polite"></div>
-
       <div class="row" style="margin-top:10px">
         <button class="btn primary" id="makePrompt" title="回答をもとに最終プロンプトを生成">次へ</button>
         <div id="progressFWrap" class="progress-wrap"><div class="progress"><div class="ind"></div></div></div>
@@ -190,8 +187,13 @@
 
     <section class="panel" aria-labelledby="s3h" style="margin-top:16px">
       <h2 id="s3h">③ 画像を生成・保存</h2>
-      <div class="row">
+
+      <h3>生成された最終プロンプト（NanoBanana 用 / English）</h3>
+      <div id="finalPrompt" class="out" aria-live="polite"></div>
+
+      <div class="row" style="margin-top:10px">
         <button class="btn primary" id="generate">画像を生成</button>
+        <div id="progressGWrap" class="progress-wrap"><div class="progress"><div class="ind"></div></div></div>
         <button class="btn" id="downloadZip">一括ZIP</button>
         <span class="hint"><a href="https://deepmind.google/technologies/synthid/" target="_blank" rel="noopener" title="SynthID watermark is automatically embedded">SynthID について</a></span>
       </div>
@@ -739,6 +741,7 @@ JSON like:
 
       const total = payload.n_images;
       updateProgress(`生成ジョブ開始… ${total}枚（Safety: ${payload.safety} / PNG出力）`);
+      showProgress('progressGWrap', true);
 
       if(API_BASE_URL || DIRECT_API_KEY){
         const run = API_BASE_URL
@@ -748,9 +751,10 @@ JSON like:
               }, 220000)
           : ()=> directGenerate({ prompt, images: payload.images, n: total, aspect_ratio: payload.aspect_ratio || undefined, safety: payload.safety || 'none', output_mime_type: 'image/png' }, 220000).catch(()=>null);
         const res = await retryUntil(run, (r)=> r && Array.isArray(r.images), 3, 2000);
-        if(!res || !Array.isArray(res.images)){ updateProgress('生成に失敗しました'); return; }
+        if(!res || !Array.isArray(res.images)){ updateProgress('生成に失敗しました'); showProgress('progressGWrap', false); return; }
         res.images.forEach((b64,i)=> addToGallery(`data:image/png;base64,${b64}`, i+1));
         updateProgress(`完了：${res.images.length}枚`);
+        showProgress('progressGWrap', false);
       } else {
         // モック描画（API未設定）
         for(let i=1;i<=total;i++){
@@ -760,6 +764,7 @@ JSON like:
           await new Promise(r=>setTimeout(r, 50));
         }
         updateProgress(`完了（モック）：${total}枚`);
+        showProgress('progressGWrap', false);
       }
     });
 
