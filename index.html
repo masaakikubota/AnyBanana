@@ -13,12 +13,12 @@
     body{margin:0;background:#ffffff;color:var(--text);font:16px/1.55 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
     a{color:var(--accent)}
     .container{max-width:1200px;margin:0 auto;padding:28px}
-    header{display:flex;gap:16px;align-items:center;margin-bottom:18px;flex-wrap:wrap}
+    header{display:flex;gap:12px;align-items:center;margin-bottom:18px;flex-wrap:wrap}
     header h1{font-size:20px;margin:0}
     header .tag{font-size:12px;border:1px solid var(--border);background:var(--panel);padding:2px 8px;border-radius:999px;color:var(--muted)}
     .panel{background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px}
-    .grid{display:grid;gap:14px}
-    .cols-2{grid-template-columns:1fr 1fr}
+    .grid{display:grid;gap:16px}
+    .cols-2{grid-template-columns:6fr 4fr; column-gap:28px}
     .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
     label{font-size:14px;color:var(--muted)}
     input[type="text"], textarea, input[type="number"]{width:100%;background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:10px 12px;outline:none}
@@ -50,7 +50,11 @@
     .ok{color:var(--ok)}
     .warn{color:#b45309}
     .sr{position:absolute;clip:rect(1px,1px,1px,1px);padding:0;border:0;height:1px;width:1px;overflow:hidden}
-    @media (max-width: 900px){.cols-2{grid-template-columns:1fr}.gallery,.upload-grid{grid-template-columns:repeat(3,1fr)}}
+    @media (max-width: 900px){
+      .cols-2{grid-template-columns:1fr}
+      .cols-2 > div + div{ margin-top:14px }
+      .gallery,.upload-grid{grid-template-columns:repeat(3,1fr)}
+    }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 </head>
@@ -62,6 +66,8 @@
       <span class="pill">GitHub Pages OK</span>
       <span class="pill">最大30枚の参照画像</span>
       <span id="apiPill" class="pill warn">API: mock mode</span>
+      <button class="btn" id="setApi" title="APIエンドポイントを設定">API設定</button>
+      <button class="btn" id="clearApi" title="API設定を解除してモックに戻す">API解除</button>
     </header>
 
     <section class="panel" aria-labelledby="s1h">
@@ -168,6 +174,29 @@
         catch{ el.textContent = 'API: ' + API_BASE_URL; el.classList.add('ok'); el.classList.remove('warn'); }
       } else {
         el.textContent = 'API: mock mode'; el.classList.remove('ok'); el.classList.add('warn');
+      }
+    })();
+
+    // API設定UI
+    (function(){
+      const setBtn = document.getElementById('setApi');
+      const clearBtn = document.getElementById('clearApi');
+      if(setBtn){
+        setBtn.addEventListener('click', ()=>{
+          const current = localStorage.getItem('NB_API_BASE_URL') || '';
+          const val = prompt('API Base URL (例: https://your-proxy.example.com)', current);
+          if(val===null) return;
+          const url = val.trim();
+          if(url){ localStorage.setItem('NB_API_BASE_URL', url); }
+          else { localStorage.removeItem('NB_API_BASE_URL'); }
+          location.href = location.pathname; // クエリやハッシュをクリアして再読込
+        });
+      }
+      if(clearBtn){
+        clearBtn.addEventListener('click', ()=>{
+          localStorage.removeItem('NB_API_BASE_URL');
+          location.href = location.pathname;
+        });
       }
     })();
 
