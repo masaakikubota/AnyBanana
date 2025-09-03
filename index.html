@@ -6,46 +6,50 @@
   <title>NanoBanana Prompt Builder & Generator</title>
   <style>
     :root{
-      /* AnyAI UI tokens */
-      --bg:#FFFFFF; --bg-subtle:#F9FAFB; --border:#E5E7EB; --text:#0F172A; --muted:#6B7280;
-      --primary:#2B6AF3; --primary-600:#1F5AE6; --cyan:#16B6FF; --orange:#FF7A3D; --amber:#FFC24A;
+      /* AnyBanana tokens */
+      --bg:#FFFFFF; --bg-subtle:#F7F8FA; --border:#E6E8EC; --text:#0F172A; --muted:#64748B;
+      --primary:#0071E3; --primary-600:#0B66D4; --primary-700:#0A58BF;
       --success:#16A34A; --warning:#F59E0B; --error:#DC2626;
       --radius-sm:8px; --radius-md:12px; --radius-lg:16px;
-      --shadow-card:0 1px 2px rgba(0,0,0,.06), 0 1px 1px rgba(0,0,0,.04);
-      --shadow-popover:0 8px 24px rgba(0,0,0,.12);
+      --shadow-card:0 1px 2px rgba(0,0,0,.05);
+      --shadow-popover:0 8px 24px rgba(0,0,0,.10);
       /* legacy aliases */
       --panel: var(--bg); --card: var(--bg); --accent: var(--primary); --ok: var(--success);
     }
     html,body{height:100%}
-    body{margin:0;background:var(--bg-subtle);color:var(--text);font:16px/1.55 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+    body{margin:0;background:var(--bg-subtle);color:var(--text);font:15px/1.6 -apple-system, system-ui, "SF Pro Text", "SF Pro Display", Segoe UI, Inter, Roboto, Helvetica, Arial}
     a{color:var(--accent)}
-    .container{max-width:1200px;margin:0 auto;padding:28px}
-    header{display:flex;gap:12px;align-items:center;margin-bottom:18px;flex-wrap:wrap}
-    header h1{font-size:20px;margin:0}
-    header .tag{font-size:12px;border:1px solid var(--border);background:var(--panel);padding:2px 8px;border-radius:999px;color:var(--muted)}
+    .container{max-width:1120px;margin:0 auto;padding:24px}
+    header{display:flex;gap:12px;align-items:center;margin-bottom:18px;flex-wrap:wrap;border-bottom:1px solid var(--border);padding-bottom:12px}
+    header h1{font-size:28px;line-height:34px;margin:0}
+    header .tag{font-size:12px;border:1px solid var(--border);background:var(--panel);padding:2px 8px;border-radius:9999px;color:var(--muted)}
     .panel{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px; box-shadow: var(--shadow-card)}
     .grid{display:grid;gap:16px}
-    .cols-2{grid-template-columns:6fr 4fr; column-gap:36px; row-gap:12px}
+    .cols-2{grid-template-columns:7fr 5fr; column-gap:36px; row-gap:12px}
     .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
-    label{font-size:14px;color:var(--muted)}
-    input[type="text"], textarea, input[type="number"]{width:100%;background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:var(--radius-md);padding:10px 12px;outline:none}
-    input[type="text"]:focus, textarea:focus, input[type="number"]:focus{ box-shadow: 0 0 0 3px rgba(43,106,243,0.15); border-color: var(--primary); }
+    h2{font-size:20px;line-height:28px;margin:0 0 8px}
+    h3{font-size:16px;line-height:24px;margin:14px 0 6px}
+    label{font-size:13px;color:var(--muted)}
+    input[type="text"], textarea, input[type="number"], select{width:100%;background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:var(--radius-md);padding:10px 12px;outline:none}
+    input[type="text"]:focus, textarea:focus, input[type="number"]:focus, select:focus{ box-shadow: 0 0 0 3px rgba(0,113,227,0.35); border-color: var(--primary); }
     textarea{min-height:96px;resize:vertical}
-    .btn{appearance:none;border:1px solid var(--border);background:var(--panel);color:var(--text);padding:10px 14px;border-radius:var(--radius-md);cursor:pointer}
-    .btn:hover{filter:brightness(1.05)}
+    .btn{appearance:none;border:1px solid var(--border);background:var(--panel);color:var(--text);padding:10px 14px;border-radius:var(--radius-md);cursor:pointer;transition:all .15s cubic-bezier(.22,.61,.36,1)}
+    .btn:hover{filter:brightness(1.03)}
+    .btn:focus{ box-shadow: 0 0 0 3px rgba(0,113,227,0.35); outline: none }
     .btn.primary{background:var(--primary);border:none;color:#fff}
     .btn.primary:hover{ background: var(--primary-600) }
+    .btn.primary:active{ background: var(--primary-700) }
     .btn.danger{background:linear-gradient(90deg,#ff6b6b,#ffa06d);border:none;color:#2a110e}
     .btn.ghost{background:transparent;border:1px dashed var(--border);color:var(--muted)}
     .hint{font-size:12px;color:var(--muted)}
     .upload-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
-    .slot{position:relative;border:1px dashed var(--border);background:var(--card);aspect-ratio:1;border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;color:var(--muted);overflow:hidden}
+    .slot{position:relative;border:1px solid var(--border);background:var(--card);aspect-ratio:1;border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;color:var(--muted);overflow:hidden}
     .slot input{display:none}
     .slot .idx{position:absolute;top:6px;left:8px;font-size:12px;background:#0000000d;padding:2px 6px;border-radius:999px}
     .slot img{width:100%;height:100%;object-fit:cover}
     .slot .remove{position:absolute;top:6px;right:6px;background:#0007;border:none;border-radius:999px;color:#fff;cursor:pointer;padding:4px 8px}
     .slot .drop{pointer-events:none}
-    .slot.selected{outline:2px solid var(--accent);outline-offset:2px}
+    .slot.selected{outline:2px solid var(--accent);outline-offset:2px; box-shadow: 0 8px 24px rgba(0,0,0,.08)}
     .slot.dragover{border-color:var(--accent);box-shadow:0 0 0 2px rgba(11,107,255,.2) inset}
     .toggle{margin:8px 0 0}
     .questions{display:grid;gap:10px}
@@ -59,13 +63,28 @@
     .ok{color:var(--ok)}
     .warn{color:#b45309}
     .sr{position:absolute;clip:rect(1px,1px,1px,1px);padding:0;border:0;height:1px;width:1px;overflow:hidden}
+    /* Gallery responsive columns: 5/4/3/2 */
+    @media (max-width: 1199px){ .gallery{ grid-template-columns:repeat(4,1fr) } }
+    @media (max-width: 1023px){ .gallery{ grid-template-columns:repeat(3,1fr) } }
+    @media (max-width: 767px){ .gallery{ grid-template-columns:repeat(2,1fr) } }
+    /* Segmented control for AR presets */
+    .seg{ display:inline-flex; gap:0; border:1px solid var(--border); border-radius:9999px; overflow:hidden; background:var(--panel); margin-top:6px }
+    .seg-btn{ border:none; background:transparent; padding:6px 10px; font-size:12px; color:var(--muted); cursor:pointer }
+    .seg-btn.active{ background:var(--primary); color:#fff }
+    /* Sticky CTA */
+    .sticky-cta{ position:fixed; right:24px; bottom:24px; z-index:50 }
+    @media (max-width: 900px){ .sticky-cta{ left:12px; right:12px; bottom:12px } .sticky-cta .btn{ width:100% } }
+    /* Hint 2-line clamp */
+    .hint{ display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden }
+    /* Toast */
+    .toast{ position:fixed; right:16px; top:16px; background:var(--bg); border:1px solid var(--border); padding:10px 12px; border-radius:var(--radius-md); box-shadow:var(--shadow-popover); z-index:60; font-size:13px; color:var(--text); transition: all .25s }
     @media (max-width: 900px){
       .cols-2{grid-template-columns:1fr}
       .cols-2 > div + div{ margin-top:14px; border-left:none; padding-left:0 }
       .gallery,.upload-grid{grid-template-columns:repeat(3,1fr)}
     }
     @media (min-width: 901px){
-      .cols-2 > div:last-child{ border-left:1px dashed var(--border); padding-left:16px }
+      .cols-2 > div:last-child{ border-left:1px solid var(--border); padding-left:16px }
     }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
@@ -97,7 +116,14 @@
             </div>
             <div style="flex:1">
               <label for="ar">アスペクト比</label>
-              <input id="ar" type="text" placeholder="例：16:9 / 1:1 / 4:5（未指定：編集時は入力AR、複数画像時は最後の画像AR）" />
+              <input id="ar" type="text" placeholder="例：16:9 / 1:1 / 4:5" />
+              <div class="seg" role="group" aria-label="AR presets">
+                <button class="seg-btn" data-ar="1:1">1:1</button>
+                <button class="seg-btn" data-ar="4:5">4:5</button>
+                <button class="seg-btn" data-ar="3:4">3:4</button>
+                <button class="seg-btn" data-ar="16:9">16:9</button>
+                <button class="seg-btn" data-ar="custom">カスタム</button>
+              </div>
             </div>
           </div>
 
@@ -125,14 +151,14 @@
           <h2 style="margin:0 0 8px">参照画像（最大30枚・順番厳守）</h2>
           <div class="hint">最初は 1〜5 の5枠だけ表示。順番＝ <code>&lt;IMG_01&gt;…&lt;IMG_30&gt;</code> としてプロンプトに紐づきます。複数画像時は最後の画像のARが採用（未指定時）。</div>
           <div class="upload-grid" id="uploadGrid" aria-label="画像アップロードグリッド"></div>
-          <button class="btn toggle" id="toggleSlots">+ 6〜30 を表示</button>
+          <button class="btn toggle" id="toggleSlots">＋ 6〜30 を追加</button>
         </div>
       </div>
     </section>
 
     <section class="panel" aria-labelledby="s2h" style="margin-top:16px">
-      <h2 id="s2h" style="margin:0 0 8px">② ステップバック質問 → プロンプト構築（Gemini 2.5 Pro）</h2>
-      <div class="hint">［質問を生成］で Pro に問い合わせ、最適化質問（日本語）を生成→回答→［最終プロンプトを作成］で英語プロンプトを構築。モックフォールバックも搭載。</div>
+      <h2 id="s2h">② 質問に答えて精度を上げる</h2>
+      <div class="hint">必要に応じて自動で分割実行します。</div>
 
       <div class="row" style="margin-top:8px">
         <button class="btn" id="genQuestions">質問を生成</button>
@@ -142,16 +168,16 @@
 
       <div id="questions" class="questions" style="margin-top:12px"></div>
 
-      <h3 style="margin:14px 0 6px">生成された最終プロンプト（NanoBanana 用 / English）</h3>
+      <h3>生成された最終プロンプト（NanoBanana 用 / English）</h3>
       <div id="finalPrompt" class="out" aria-live="polite"></div>
     </section>
 
     <section class="panel" aria-labelledby="s3h" style="margin-top:16px">
-      <h2 id="s3h" style="margin:0 0 8px">③ 画像生成（Gemini 2.5 Flash Image / NanoBanana）</h2>
+      <h2 id="s3h">③ 画像を生成・保存</h2>
       <div class="row">
         <button class="btn primary" id="generate">画像を生成</button>
         <button class="btn" id="downloadZip">一括ZIP</button>
-        <span class="hint">生成結果には自動で <a href="https://deepmind.google/technologies/synthid/" target="_blank" rel="noopener">SynthID</a> の透かしが含まれます。</span>
+        <span class="hint"><a href="https://deepmind.google/technologies/synthid/" target="_blank" rel="noopener" title="SynthID watermark is automatically embedded">SynthID について</a></span>
       </div>
       <div id="progress" class="hint" style="margin-top:8px"></div>
       <div id="gallery" class="gallery" style="margin-top:12px"></div>
@@ -161,6 +187,9 @@
       <p>安全のため、フロントから直接APIキーは扱いません。本HTMLは任意のバックエンド（Cloud Run/Functions/Cloudflare Workers 等）を前提にしています。<br>※ モックモードでもUIは動作します。</p>
     </div>
   </div>
+
+  <!-- Sticky CTA -->
+  <div class="sticky-cta"><button class="btn primary" id="generateSticky">画像を生成</button></div>
 
   <script>
     // ====== 設定 ======
@@ -440,8 +469,22 @@ JSON like:
       }
     });
 
+    // AR segmented control
+    (function(){
+      const arInput = document.getElementById('ar');
+      document.querySelectorAll('.seg [data-ar]').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          const val = btn.getAttribute('data-ar');
+          document.querySelectorAll('.seg-btn').forEach(b=> b.classList.remove('active'));
+          if(val==='custom'){ arInput.focus(); }
+          else { arInput.value = val; btn.classList.add('active'); }
+        });
+      });
+    })();
+
     // クリア
     document.getElementById('clearAll').addEventListener('click',()=>{
+      if(!confirm('すべてクリアしますか？')) return;
       document.getElementById('goal').value='';
       document.getElementById('count').value='10';
       document.getElementById('ar').value='';
@@ -552,10 +595,15 @@ JSON like:
       document.getElementById('finalPrompt').textContent = resp.final_prompt + (resp.notes? `\n\n# Notes\n${resp.notes}`:'');
     });
 
+    function showToast(msg){
+      const el = document.createElement('div'); el.className='toast'; el.textContent = msg; document.body.appendChild(el);
+      setTimeout(()=>{ el.style.opacity='0'; el.style.transform='translateY(-6px)'; }, 2400);
+      setTimeout(()=> el.remove(), 2800);
+    }
     document.getElementById('copyPrompt').addEventListener('click', ()=>{
       const t = document.getElementById('finalPrompt').textContent.trim();
-      if(!t){ alert('まだプロンプトがありません'); return; }
-      navigator.clipboard?.writeText(t).then(()=>{ alert('Copied'); }).catch(()=> alert('コピーに失敗しました'));
+      if(!t){ showToast('まだプロンプトがありません'); return; }
+      navigator.clipboard?.writeText(t).then(()=>{ showToast('コピーしました'); }).catch(()=> showToast('コピーに失敗しました'));
     });
 
     function collectAnswers(){
@@ -675,6 +723,13 @@ JSON like:
       const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'nanobanana_outputs.zip'; a.click();
       URL.revokeObjectURL(a.href);
     });
+
+    // Sticky CTA delegating to main generate
+    (function(){
+      const g = document.getElementById('generate');
+      const gs = document.getElementById('generateSticky');
+      if(gs && g){ gs.addEventListener('click', ()=> g.click()); }
+    })();
   </script>
 </body>
 </html>
