@@ -13,7 +13,10 @@ Static frontend for NanoBanana Prompt Builder & Generator.
 3) By default, it runs in mock mode (no API calls).
 
 ## Connect a Backend (optional)
-- Deploy the API proxy from the other repo (`AnyAIMarketingPlanner/nanobanana-app/api-proxy`) or any compatible endpoint.
+- Deploy the API proxy from this repo (Render Blueprint: `render.yaml`).
+  - Quick deploy: https://render.com/deploy?repo=https://github.com/masaakikubota/AnyBanana
+  - Service rootDir: `nanobanana-app/api-proxy`
+  - Env var: `GEMINI_API_KEY`
 - Then open the site with `?api=` query:
   - `https://masaakikubota.github.io/AnyBanana/?api=https://your-proxy.example.com`
 - The URL is saved to `localStorage` and used on subsequent visits.

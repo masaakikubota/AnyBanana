@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: anybanana-api-proxy
+    env: node
+    plan: free
+    rootDir: nanobanana-app/api-proxy
+    buildCommand: npm install
+    startCommand: node server.js
+    autoDeploy: true
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: NODE_VERSION
+        value: 20
+
