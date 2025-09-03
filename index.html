@@ -63,6 +63,8 @@
     .ok{color:var(--ok)}
     .warn{color:#b45309}
     .sr{position:absolute;clip:rect(1px,1px,1px,1px);padding:0;border:0;height:1px;width:1px;overflow:hidden}
+    /* Hide header API status and controls when embedding */
+    #apiPill, #setApi, #clearApi{ display:none !important }
     /* Input section: stack all fields vertically */
     section[aria-labelledby="s1h"] .row{ flex-direction: column; align-items: stretch }
     section[aria-labelledby="s1h"] .row > *{ width:100% }
@@ -146,6 +148,13 @@
               <div class="hint">AI Studio safety can be relaxed; baseline policies still apply.</div>
             </div>
           </div>
+
+          <div class="row" style="margin-top:10px">
+            <input type="file" id="apiKeyFile" accept=".txt,text/plain" style="display:none" />
+            <button class="btn" id="loadApiKeyBtn" title="GeminiAPI.txt を選択してキーを読み込み">APIキー読込</button>
+            <button class="btn" id="clearApiKeyBtn" title="保存されたAPIキーを削除">APIキー削除</button>
+            <div class="hint">ローカル用（公開時は使用しないでください）</div>
+          </div>
         </div>
 
         <div>
@@ -195,7 +204,7 @@
   <script>
     // ====== 設定 ======
     // API ベースURLはクエリ (?api=https://your-proxy.example.com) または localStorage を優先
-    const API_BASE_URL = (()=>{
+    let API_BASE_URL = (()=>{
       try{
         const u = new URL(location.href);
         const q = (u.searchParams.get('api')||'').trim();
@@ -209,6 +218,8 @@
     // 直接API呼び出し用の埋め込みキー（必要ならここに設定）
     const DIRECT_API_KEY = 'AIzaSyANn5afb9V8BafvCu7r5Cr4J4SO2RZDc4g';
     const GOOGLE_API_BASE = 'https://generativelanguage.googleapis.com/v1beta';
+    // If direct key exists, force direct mode and ignore stored proxy URL
+    if(DIRECT_API_KEY){ API_BASE_URL = ''; try{ localStorage.removeItem('NB_API_BASE_URL'); }catch(_){} }
 
     // ヘッダーにAPI状態を表示
     (function(){
@@ -243,6 +254,9 @@
     (function(){
       const setBtn = document.getElementById('setApi');
       const clearBtn = document.getElementById('clearApi');
+      const loadKeyBtn = document.getElementById('loadApiKeyBtn');
+      const clearKeyBtn = document.getElementById('clearApiKeyBtn');
+      const keyFile = document.getElementById('apiKeyFile');
       if(setBtn){
         setBtn.addEventListener('click', ()=>{
           const current = localStorage.getItem('NB_API_BASE_URL') || '';
@@ -257,6 +271,30 @@
       if(clearBtn){
         clearBtn.addEventListener('click', ()=>{
           localStorage.removeItem('NB_API_BASE_URL');
+          location.href = location.pathname;
+        });
+      }
+      if(loadKeyBtn && keyFile){
+        loadKeyBtn.addEventListener('click', ()=> keyFile.click());
+        keyFile.addEventListener('change', ()=>{
+          const f = keyFile.files?.[0]; if(!f) return;
+          const reader = new FileReader();
+          reader.onload = ()=>{
+            const k = String(reader.result||'').trim();
+            if(!k){ alert('キーが読み取れませんでした'); return; }
+            localStorage.setItem('NB_DIRECT_API_KEY', k);
+            DIRECT_API_KEY = k;
+            alert('APIキーを保存しました（ローカルストレージ）');
+            location.href = location.pathname;
+          };
+          reader.readAsText(f);
+        });
+      }
+      if(clearKeyBtn){
+        clearKeyBtn.addEventListener('click', ()=>{
+          localStorage.removeItem('NB_DIRECT_API_KEY');
+          DIRECT_API_KEY = '';
+          alert('保存されたAPIキーを削除しました');
           location.href = location.pathname;
         });
       }
