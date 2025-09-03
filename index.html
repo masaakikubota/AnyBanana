@@ -170,8 +170,22 @@
       const el = document.getElementById('apiPill');
       if(!el) return;
       if(API_BASE_URL){
-        try{ el.textContent = 'API: ' + new URL(API_BASE_URL).host; el.classList.add('ok'); el.classList.remove('warn'); }
-        catch{ el.textContent = 'API: ' + API_BASE_URL; el.classList.add('ok'); el.classList.remove('warn'); }
+        let hostText;
+        try{ hostText = new URL(API_BASE_URL).host; }
+        catch{ hostText = API_BASE_URL; }
+        el.textContent = 'API: ' + hostText + ' (checking…)';
+        el.classList.remove('warn');
+        // Ping /health to verify connectivity
+        const controller = new AbortController();
+        const t = setTimeout(()=> controller.abort(), 4000);
+        fetch(API_BASE_URL.replace(/\/$/, '') + '/health', { signal: controller.signal })
+          .then(r=> r.ok ? r.json() : null)
+          .then(js=>{
+            if(js && js.ok){ el.textContent = 'API: ' + hostText + ' (OK)'; el.classList.add('ok'); el.classList.remove('warn'); }
+            else { el.textContent = 'API: ' + hostText + ' (NG)'; el.classList.remove('ok'); el.classList.add('warn'); }
+          })
+          .catch(()=>{ el.textContent = 'API: ' + hostText + ' (NG)'; el.classList.remove('ok'); el.classList.add('warn'); })
+          .finally(()=> clearTimeout(t));
       } else {
         el.textContent = 'API: mock mode'; el.classList.remove('ok'); el.classList.add('warn');
       }
