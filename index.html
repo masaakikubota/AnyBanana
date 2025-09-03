@@ -63,6 +63,11 @@
     .ok{color:var(--ok)}
     .warn{color:#b45309}
     .sr{position:absolute;clip:rect(1px,1px,1px,1px);padding:0;border:0;height:1px;width:1px;overflow:hidden}
+    /* Input section: stack all fields vertically */
+    section[aria-labelledby="s1h"] .row{ flex-direction: column; align-items: stretch }
+    section[aria-labelledby="s1h"] .row > *{ width:100% }
+    /* Hide drop/paste helper text in reference slots */
+    .slot .drop{ display:none !important }
     /* Gallery responsive columns: 5/4/3/2 */
     @media (max-width: 1199px){ .gallery{ grid-template-columns:repeat(4,1fr) } }
     @media (max-width: 1023px){ .gallery{ grid-template-columns:repeat(3,1fr) } }
