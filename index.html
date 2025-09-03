@@ -250,6 +250,18 @@
       }
     })();
 
+    // fetch helper with timeout → returns JSON or null
+    async function fetchJsonWithTimeout(url, options={}, ms=30000){
+      const controller = new AbortController();
+      const t = setTimeout(()=> controller.abort(), ms);
+      try{
+        const r = await fetch(url, { ...options, signal: controller.signal });
+        if(!r.ok) return null;
+        return await r.json();
+      }catch(_){ return null; }
+      finally{ clearTimeout(t); }
+    }
+
     // API設定UI
     (function(){
       const setBtn = document.getElementById('setApi');
@@ -555,10 +567,10 @@ JSON like:
       box.innerHTML = '';
       let resp;
       if(API_BASE_URL){
-        resp = await fetch(API_BASE_URL + '/prompt', {
+        resp = await fetchJsonWithTimeout(API_BASE_URL + '/prompt', {
           method:'POST', headers:{'Content-Type':'application/json'},
           body: JSON.stringify({ systemPrompt: SYSTEM_PROMPT_FOR_STEP2, metaPrompt: META_PROMPT_FOR_STEP2, input: payload })
-        }).then(r=>r.json()).catch(()=>null);
+        }, 45000);
       } else if (DIRECT_API_KEY){
         resp = await directPrompt(SYSTEM_PROMPT_FOR_STEP2, META_PROMPT_FOR_STEP2, payload, null).catch(()=>null);
       }
@@ -637,10 +649,10 @@ JSON like:
       const answers = collectAnswers();
       let resp;
       if(API_BASE_URL){
-        resp = await fetch(API_BASE_URL + '/prompt', {
+        resp = await fetchJsonWithTimeout(API_BASE_URL + '/prompt', {
           method:'POST', headers:{'Content-Type':'application/json'},
           body: JSON.stringify({ systemPrompt: SYSTEM_PROMPT_FOR_STEP2, metaPrompt: META_PROMPT_FOR_STEP2, input: payload, answers })
-        }).then(r=>r.json()).catch(()=>null);
+        }, 60000);
       } else if (DIRECT_API_KEY){
         resp = await directPrompt(SYSTEM_PROMPT_FOR_STEP2, META_PROMPT_FOR_STEP2, payload, answers).catch(()=>null);
       }
@@ -707,10 +719,10 @@ JSON like:
       updateProgress(`生成ジョブ開始… ${total}枚（Safety: ${payload.safety} / PNG出力）`);
 
       if(API_BASE_URL){
-        const res = await fetch(API_BASE_URL + '/generate', {
+        const res = await fetchJsonWithTimeout(API_BASE_URL + '/generate', {
           method:'POST', headers:{'Content-Type':'application/json'},
           body: JSON.stringify({ prompt, images: payload.images, n: total, aspect_ratio: payload.aspect_ratio || undefined, safety: payload.safety || 'none', output_mime_type: 'image/png' })
-        }).then(r=>r.json()).catch(()=>null);
+        }, 120000);
         if(!res || !Array.isArray(res.images)){ updateProgress('生成に失敗しました（プロキシ確認）'); return; }
         res.images.forEach((b64,i)=> addToGallery(`data:image/png;base64,${b64}`, i+1));
         updateProgress(`完了：${res.images.length}枚`);
@@ -766,9 +778,12 @@ JSON like:
         contents: [{ role: 'user', parts: [{ text: `${metaPrompt}\n\n${userBlock}` }] }],
         generationConfig: { response_mime_type: 'application/json' }
       };
+      const controller = new AbortController();
+      const t = setTimeout(()=> controller.abort(), 60000);
       const r = await fetch(`${GOOGLE_API_BASE}/models/gemini-2.5-pro:generateContent?key=${DIRECT_API_KEY}`, {
-        method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)
+        method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body), signal: controller.signal
       });
+      clearTimeout(t);
       const json = await r.json();
       const text = json?.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
       try { return JSON.parse(text); } catch { return { phase:'final', final_prompt: 'Fallback: could not parse model JSON.', notes:'Please retry.' }; }
@@ -795,9 +810,12 @@ JSON like:
       const outImages = [];
       n = Math.min(Math.max(1, Number(n)||1), 50);
       for(let i=0;i<n;i++){
+        const controller = new AbortController();
+        const t = setTimeout(()=> controller.abort(), 120000);
         const r = await fetch(`${GOOGLE_API_BASE}/models/gemini-2.5-flash-image-preview:generateContent?key=${DIRECT_API_KEY}`, {
-          method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(bodyBase)
+          method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(bodyBase), signal: controller.signal
         });
+        clearTimeout(t);
         const json = await r.json();
         const parts = json?.candidates?.[0]?.content?.parts || [];
         const img = parts.find(p => p.inline_data?.data);
