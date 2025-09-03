@@ -1,0 +1,5 @@
+{
+  "title": "NanoBanana Prompt Optimizer",
+  "description": "Two-phase prompt optimizer for NanoBanana (Gemini 2.5 Flash Image)",
+  "version": "0.1.0"
+}
