@@ -70,6 +70,11 @@
     section[aria-labelledby="s1h"] .row > *{ width:100% }
     /* Hide drop/paste helper text in reference slots */
     .slot .drop{ display:none !important }
+    /* Progress bar */
+    .progress-wrap{ display:none; margin-top:10px }
+    .progress{ position:relative; height:6px; background:#e5e7eb; border-radius:9999px; overflow:hidden }
+    .progress .ind{ position:absolute; left:-40%; top:0; bottom:0; width:40%; background:var(--primary); animation: indmove 1.2s infinite ease }
+    @keyframes indmove { 0%{ left:-40% } 50%{ left:60% } 100%{ left:100% } }
     /* Gallery responsive columns: 5/4/3/2 */
     @media (max-width: 1199px){ .gallery{ grid-template-columns:repeat(4,1fr) } }
     @media (max-width: 1023px){ .gallery{ grid-template-columns:repeat(3,1fr) } }
@@ -155,6 +160,11 @@
             <button class="btn" id="clearApiKeyBtn" title="保存されたAPIキーを削除">APIキー削除</button>
             <div class="hint">ローカル用（公開時は使用しないでください）</div>
           </div>
+
+          <div class="row" style="margin-top:10px">
+            <button class="btn primary" id="nextToQuestions">次へ</button>
+            <div id="progressQWrap" class="progress-wrap"><div class="progress"><div class="ind"></div></div></div>
+          </div>
         </div>
 
         <div>
@@ -170,16 +180,15 @@
       <h2 id="s2h">② 質問に答えて精度を上げる</h2>
       <div class="hint">必要に応じて自動で分割実行します。</div>
 
-      <div class="row" style="margin-top:8px">
-        <button class="btn" id="genQuestions">質問を生成</button>
-        <button class="btn" id="makePrompt" title="回答をもとに最終プロンプトを生成">最終プロンプトを作成</button>
-        <button class="btn" id="copyPrompt" title="最終プロンプトをコピー">コピー</button>
-      </div>
-
       <div id="questions" class="questions" style="margin-top:12px"></div>
 
       <h3>生成された最終プロンプト（NanoBanana 用 / English）</h3>
       <div id="finalPrompt" class="out" aria-live="polite"></div>
+
+      <div class="row" style="margin-top:10px">
+        <button class="btn primary" id="makePrompt" title="回答をもとに最終プロンプトを生成">次へ</button>
+        <div id="progressFWrap" class="progress-wrap"><div class="progress"><div class="ind"></div></div></div>
+      </div>
     </section>
 
     <section class="panel" aria-labelledby="s3h" style="margin-top:16px">
@@ -324,6 +333,7 @@
     })();
 
     function updateProgress(msg){ const el=document.getElementById('progress'); if(el) el.textContent = msg; }
+    function showProgress(id, show=true){ const w = document.getElementById(id); if(!w) return; w.style.display = show? 'block':'none'; }
 
     // ====== フェーズ2 System Prompt (loaded from prompts file) ======
     let SYSTEM_PROMPT_FOR_STEP2 = '';
@@ -572,10 +582,11 @@ JSON like:
     });
 
     // ====== 質問生成 ======
-    document.getElementById('genQuestions').addEventListener('click', async ()=>{
+    async function doGenerateQuestions(){
       const payload = collectPayload();
       const box = document.getElementById('questions');
       box.innerHTML = '';
+      showProgress('progressQWrap', true);
       let resp;
       if(API_BASE_URL || DIRECT_API_KEY){
         const run = API_BASE_URL
@@ -583,12 +594,16 @@ JSON like:
                 method:'POST', headers:{'Content-Type':'application/json'},
                 body: JSON.stringify({ systemPrompt: SYSTEM_PROMPT_FOR_STEP2, metaPrompt: META_PROMPT_FOR_STEP2, input: payload })
               }, 145000)
-          : ()=> directPrompt(SYSTEM_PROMPT_FOR_STEP2, META_PROMPT_FOR_STEP2, payload, null, 145000).catch(()=>null);
+          : ()=> directPrompt(SYSTEM_PROMPT_FOR_STEP2, META_PROMPT_FOR_STEP2, payload, null, 'gemini-2.5-flash', 145000).catch(()=>null);
         resp = await retryUntil(run, (r)=> r && r.phase === 'questions', 3, 1200);
       }
       if(!resp || resp.phase !== 'questions'){ resp = buildLocalQuestions(payload); }
       renderQuestions(resp.questions);
-    });
+      showProgress('progressQWrap', false);
+    }
+
+    const genBtn = document.getElementById('genQuestions'); if(genBtn){ genBtn.addEventListener('click', doGenerateQuestions); }
+    const nextQ = document.getElementById('nextToQuestions'); if(nextQ){ nextQ.addEventListener('click', doGenerateQuestions); }
 
     function collectPayload(){
       const goal = document.getElementById('goal').value.trim();
@@ -659,6 +674,7 @@ JSON like:
     document.getElementById('makePrompt').addEventListener('click', async ()=>{
       const payload = collectPayload();
       const answers = collectAnswers();
+      showProgress('progressFWrap', true);
       let resp;
       if(API_BASE_URL || DIRECT_API_KEY){
         const run = API_BASE_URL
@@ -666,13 +682,14 @@ JSON like:
                 method:'POST', headers:{'Content-Type':'application/json'},
                 body: JSON.stringify({ systemPrompt: SYSTEM_PROMPT_FOR_STEP2, metaPrompt: META_PROMPT_FOR_STEP2, input: payload, answers })
               }, 160000)
-          : ()=> directPrompt(SYSTEM_PROMPT_FOR_STEP2, META_PROMPT_FOR_STEP2, payload, answers, 160000).catch(()=>null);
+          : ()=> directPrompt(SYSTEM_PROMPT_FOR_STEP2, META_PROMPT_FOR_STEP2, payload, answers, 'gemini-2.5-pro', 160000).catch(()=>null);
         resp = await retryUntil(run, (r)=> r && r.phase === 'final', 3, 1500);
       }
       if(!resp || resp.phase !== 'final'){
         resp = { phase:'final', final_prompt: buildLocalPrompt(payload, answers), notes: 'If multiple input images, the last image AR is adopted when unspecified.' };
       }
       document.getElementById('finalPrompt').textContent = resp.final_prompt + (resp.notes? `\n\n# Notes\n${resp.notes}`:'');
+      showProgress('progressFWrap', false);
     });
 
     function showToast(msg){
@@ -680,11 +697,6 @@ JSON like:
       setTimeout(()=>{ el.style.opacity='0'; el.style.transform='translateY(-6px)'; }, 2400);
       setTimeout(()=> el.remove(), 2800);
     }
-    document.getElementById('copyPrompt').addEventListener('click', ()=>{
-      const t = document.getElementById('finalPrompt').textContent.trim();
-      if(!t){ showToast('まだプロンプトがありません'); return; }
-      navigator.clipboard?.writeText(t).then(()=>{ showToast('コピーしました'); }).catch(()=> showToast('コピーに失敗しました'));
-    });
 
     function collectAnswers(){
       const m = {};
@@ -782,7 +794,7 @@ JSON like:
       ctx.fillText(line, x, y);
     }
 
-    async function directPrompt(systemPrompt, metaPrompt, input, answers, timeoutMs=160000){
+    async function directPrompt(systemPrompt, metaPrompt, input, answers, modelName='gemini-2.5-pro', timeoutMs=160000){
       const userBlock = `INPUT:\n${JSON.stringify(input)}\n\n` + (answers ? `ANSWERS:\n${JSON.stringify(answers)}` : '');
       const body = {
         system_instruction: systemPrompt ? { parts: [{ text: systemPrompt }] } : undefined,
@@ -791,7 +803,7 @@ JSON like:
       };
       const controller = new AbortController();
       const t = setTimeout(()=> controller.abort(), timeoutMs);
-      const r = await fetch(`${GOOGLE_API_BASE}/models/gemini-2.5-pro:generateContent?key=${DIRECT_API_KEY}`, {
+      const r = await fetch(`${GOOGLE_API_BASE}/models/${modelName}:generateContent?key=${DIRECT_API_KEY}`, {
         method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body), signal: controller.signal
       });
       clearTimeout(t);
